@@ -22,4 +22,4 @@
 #define PLOOPY_DPI_DEFAULT 1  // Default to 1200 DPI
 
 // Tapping term for tap-hold functionality (in milliseconds)
-#define TAPPING_TERM 200  // Adjust this value to change how long you need to hold for drag scroll
+#define TAPPING_TERM 250  // Adjust this value to change how long you need to hold for drag scroll

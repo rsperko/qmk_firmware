@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include QMK_KEYBOARD_H
+#include "pointing_device.h" // For get_mouse_report() and report_mouse_t
 
 // Define custom keycodes
 enum custom_keycodes {
@@ -36,9 +37,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
           KC_BTN2, CTRL_DOWN_MOD
     ),
 
-    [_NAV_LAYER] = LAYOUT( /* Navigation Layer */
-        KC_BTN4, KC_TRNS, KC_BTN5,
-          KC_TRNS, KC_TRNS
+    [_NAV_LAYER] = LAYOUT( /* Navigation Layer - Hold Bottom-Right Button */
+        KC_BTN4, LGUI(KC_GRV), KC_BTN5,    // Top-Left: Back, Top-Middle: Spotlight, Top-Right: Forward
+          LGUI(KC_SPC), KC_TRNS             // Bottom-Left: Cycle App Windows, Bottom-Right: Transparent (Layer Activator)
     ),
 };
 
@@ -181,4 +182,33 @@ void matrix_scan_user(void) {
             sniper_mode_was_active = true; // Mark that sniper mode (hold action) has occurred
         }
     }
+}
+
+report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
+    if (IS_LAYER_ON(_NAV_LAYER)) {
+        // If the NAV_LAYER is active, we want to suppress scroll wheel events
+        // to prevent accidental scrolling when trying to use layer functions
+        // mapped to the scroll wheel button (DPI_TOGGLE).
+        mouse_report.v = 0; // Zero out vertical scroll
+        mouse_report.h = 0; // Zero out horizontal scroll
+    }
+    return mouse_report;
+}
+
+// Called by QMK when a physical encoder (scroll wheel) is turned.
+bool encoder_update_user(uint8_t index, bool clockwise) {
+    if (drag_scroll_active) {
+        // Physical scroll wheel was used while drag scroll mode was active.
+        // Deactivate drag scroll mode.
+        toggle_drag_scroll();      // Deactivate QMK's internal drag scroll state.
+        drag_scroll_active = false; // Update our local tracking flag.
+
+        // By returning true here, we allow the default QMK encoder action to proceed.
+        // Since drag_scroll is now false, this will be a normal scroll event.
+        // If the _NAV_LAYER is also active, pointing_device_task_user will then suppress this scroll.
+        return true;
+    }
+
+    // If drag scroll is not active, let QMK handle the encoder event normally for standard scrolling.
+    return true;
 }

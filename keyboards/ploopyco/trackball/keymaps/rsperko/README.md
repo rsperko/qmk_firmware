@@ -20,6 +20,8 @@ This keymap implements several advanced features for the Ploopy trackball:
 -   Holding activates a navigation layer where:
     -   Left button (normally left-click) becomes back button (KC_BTN4)
     -   Button 3 becomes forward button (KC_BTN5)
+    -   Top-Middle button cycles through windows of the current application (Cmd+`)
+    -   Bottom-Left button activates macOS Spotlight Search (Cmd+Space)
 
 ## Implementation Details
 
