@@ -17,9 +17,29 @@
  */
 #include QMK_KEYBOARD_H
 
+// Define a custom keycode for DPI toggling
+enum custom_keycodes {
+    DPI_TOGGLE = SAFE_RANGE
+};
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [0] = LAYOUT( /* Base */
-        KC_BTN1, KC_BTN3, LCTL(KC_UP),
+        KC_BTN1, DPI_TOGGLE, LCTL(KC_UP),
           KC_BTN2, LCTL(KC_DOWN)
     ),
 };
+
+bool process_record_user(uint16_t keycode, keyrecord_t* record) {
+    switch (keycode) {
+        case DPI_TOGGLE:
+            if (record->event.pressed) {
+                // Toggle between the two DPI options (0 and 1)
+                keyboard_config.dpi_config = keyboard_config.dpi_config == 0 ? 1 : 0;
+                eeconfig_update_kb(keyboard_config.raw);
+                pointing_device_set_cpi(dpi_array[keyboard_config.dpi_config]);
+            }
+            return false; // Skip all further processing of this key
+        default:
+            return true; // Process all other keycodes normally
+    }
+}
