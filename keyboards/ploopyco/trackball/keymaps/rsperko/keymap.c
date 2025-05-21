@@ -17,16 +17,28 @@
  */
 #include QMK_KEYBOARD_H
 
-// Define a custom keycode for DPI toggling and drag scroll
+// Define custom keycodes
 enum custom_keycodes {
     DPI_TOGGLE = SAFE_RANGE,
-    BTN3_SCROLL
+    BTN3_SCROLL,
+    CTRL_DOWN_MOD // New keycode for the dual-function key
+};
+
+// Define layers
+enum layers {
+    _BASE = 0,   // Base layer
+    _NAV_LAYER   // Navigation layer for back/forward
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-    [0] = LAYOUT( /* Base */
+    [_BASE] = LAYOUT( /* Base */
         KC_BTN1, DPI_TOGGLE, BTN3_SCROLL,
-          KC_BTN2, LCTL(KC_DOWN)
+          KC_BTN2, CTRL_DOWN_MOD
+    ),
+
+    [_NAV_LAYER] = LAYOUT( /* Navigation Layer */
+        KC_BTN4, KC_TRNS, KC_BTN5,
+          KC_TRNS, KC_TRNS
     ),
 };
 
@@ -36,6 +48,9 @@ static bool drag_scroll_active = false;
 static uint16_t btn3_timer;
 // Track if button 3 is being held
 static bool btn3_held = false;
+// Track the ctrl_down button
+static uint16_t ctrl_down_timer;
+static bool ctrl_down_held = false;
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     // If drag scroll is active and any key is pressed, exit drag scroll mode
@@ -73,6 +88,27 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             }
             return false; // Skip all further processing of this key
 
+        case CTRL_DOWN_MOD:
+            if (record->event.pressed) {
+                // Key pressed - start timer and mark as held
+                ctrl_down_timer = timer_read();
+                ctrl_down_held = true;
+            } else {
+                // Key released
+                ctrl_down_held = false;
+
+                // Turn off the layer if it was activated
+                if (IS_LAYER_ON(_NAV_LAYER)) {
+                    layer_off(_NAV_LAYER);
+                } else if (timer_elapsed(ctrl_down_timer) < TAPPING_TERM) {
+                    // If released quickly and layer wasn't activated, send Ctrl+Down
+                    tap_code16(LCTL(KC_DOWN));
+                }
+
+                ctrl_down_timer = 0;
+            }
+            return false; // Skip all further processing of this key
+
         default:
             return true; // Process all other keycodes normally
     }
@@ -86,5 +122,11 @@ void matrix_scan_user(void) {
         toggle_drag_scroll();
         drag_scroll_active = true;
         // Don't set btn3_held to false so the user can release naturally
+    }
+
+    // Check if CTRL_DOWN_MOD is being held down
+    if (ctrl_down_held && !IS_LAYER_ON(_NAV_LAYER) && timer_elapsed(ctrl_down_timer) > TAPPING_TERM) {
+        // If the key has been held longer than TAPPING_TERM, activate the navigation layer
+        layer_on(_NAV_LAYER);
     }
 }
