@@ -18,5 +18,8 @@
 #pragma once
 
 // Custom DPI options (600 and 1200)
-#define PLOOPY_DPI_OPTIONS { 400, 1200 }
+#define PLOOPY_DPI_OPTIONS { 600, 1200 }
 #define PLOOPY_DPI_DEFAULT 1  // Default to 1200 DPI
+
+// Tapping term for tap-hold functionality (in milliseconds)
+#define TAPPING_TERM 200  // Adjust this value to change how long you need to hold for drag scroll
