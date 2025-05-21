@@ -52,9 +52,19 @@ static bool btn3_held = false;
 static uint16_t ctrl_down_timer;
 static bool ctrl_down_held = false;
 
+// For BTN3_SCROLL specific drag scroll exit
+static bool btn3_tapped_to_exit_drag_scroll = false;
+
+// For DPI_TOGGLE tap/hold (sniper mode)
+static bool dpi_toggle_held = false;
+static uint16_t dpi_toggle_timer;
+static bool sniper_mode_was_active = false; // True if the hold action (sniper) was engaged
+static uint8_t dpi_before_hold;         // Stores keyboard_config.dpi_config at press time for DPI_TOGGLE
+
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     // If drag scroll is active and any key is pressed, exit drag scroll mode
-    if (drag_scroll_active && record->event.pressed) {
+    // This general check now excludes BTN3_SCROLL as it has specific handling.
+    if (drag_scroll_active && record->event.pressed && keycode != BTN3_SCROLL) {
         toggle_drag_scroll();
         drag_scroll_active = false;
     }
@@ -62,28 +72,54 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     switch (keycode) {
         case DPI_TOGGLE:
             if (record->event.pressed) {
-                // Toggle between the two DPI options (0 and 1)
-                keyboard_config.dpi_config = keyboard_config.dpi_config == 0 ? 1 : 0;
-                eeconfig_update_kb(keyboard_config.raw);
-                pointing_device_set_cpi(dpi_array[keyboard_config.dpi_config]);
+                dpi_toggle_timer = timer_read();
+                dpi_toggle_held = true;
+                dpi_before_hold = keyboard_config.dpi_config; // Store current DPI in case it's a hold
+                sniper_mode_was_active = false; // Reset for this press event
+            } else { // Key released
+                dpi_toggle_held = false;
+                if (sniper_mode_was_active) {
+                    // Sniper mode was activated by holding, restore the original DPI
+                    keyboard_config.dpi_config = dpi_before_hold;
+                    eeconfig_update_kb(keyboard_config.raw);
+                    pointing_device_set_cpi(dpi_array[keyboard_config.dpi_config]);
+                    sniper_mode_was_active = false; // Clear the flag
+                } else if (timer_elapsed(dpi_toggle_timer) < TAPPING_TERM) {
+                    // It was a tap
+                    // Toggle from the DPI state that was active when the key was pressed
+                    keyboard_config.dpi_config = (dpi_before_hold == 0) ? 1 : 0;
+                    eeconfig_update_kb(keyboard_config.raw);
+                    pointing_device_set_cpi(dpi_array[keyboard_config.dpi_config]);
+                }
+                // If it was a hold but sniper mode condition wasn't met (e.g. already on lowest DPI),
+                // and it wasn't a tap, nothing happens on release, which is correct.
+                dpi_toggle_timer = 0;
             }
             return false; // Skip all further processing of this key
 
         case BTN3_SCROLL:
             if (record->event.pressed) {
-                // Key pressed - start timer and mark as held
                 btn3_timer = timer_read();
                 btn3_held = true;
-            } else {
-                // Key released
+                btn3_tapped_to_exit_drag_scroll = false; // Reset for this press
+
+                if (drag_scroll_active) {
+                    // If drag scroll is active and BTN3 is pressed,
+                    // consume this press to ONLY exit drag scroll.
+                    toggle_drag_scroll();
+                    drag_scroll_active = false;
+                    btn3_tapped_to_exit_drag_scroll = true;
+                }
+            } else { // Key released
                 btn3_held = false;
 
-                // If released before TAPPING_TERM and drag scroll is not active,
-                // treat it as a tap (send Ctrl+Up)
-                if (!drag_scroll_active && timer_elapsed(btn3_timer) < TAPPING_TERM) {
+                // If it wasn't a tap used to exit drag scroll, AND
+                // drag scroll isn't currently active (meaning the hold didn't activate it during *this* press-hold-release cycle), AND
+                // it was a short press (tap)
+                if (!btn3_tapped_to_exit_drag_scroll && !drag_scroll_active && timer_elapsed(btn3_timer) < TAPPING_TERM) {
                     tap_code16(LCTL(KC_UP));
                 }
-
+                // Reset timer regardless
                 btn3_timer = 0;
             }
             return false; // Skip all further processing of this key
@@ -119,14 +155,30 @@ void matrix_scan_user(void) {
     // Check if BTN3_SCROLL is being held down
     if (btn3_held && !drag_scroll_active && timer_elapsed(btn3_timer) > TAPPING_TERM) {
         // If the key has been held longer than TAPPING_TERM, toggle drag scroll on
-        toggle_drag_scroll();
-        drag_scroll_active = true;
-        // Don't set btn3_held to false so the user can release naturally
+        // And it wasn't a press that was consumed just to exit drag scroll
+        if (!btn3_tapped_to_exit_drag_scroll) {
+            toggle_drag_scroll();
+            drag_scroll_active = true;
+        }
+        // Don't set btn3_held to false here so the user can release naturally;
+        // drag_scroll_active state handles behavior on next press or release.
     }
 
     // Check if CTRL_DOWN_MOD is being held down
     if (ctrl_down_held && !IS_LAYER_ON(_NAV_LAYER) && timer_elapsed(ctrl_down_timer) > TAPPING_TERM) {
         // If the key has been held longer than TAPPING_TERM, activate the navigation layer
         layer_on(_NAV_LAYER);
+    }
+
+    // Sniper DPI mode for DPI_TOGGLE
+    if (dpi_toggle_held && !sniper_mode_was_active && timer_elapsed(dpi_toggle_timer) > TAPPING_TERM) {
+        // dpi_before_hold was set on key press.
+        // Activate sniper mode if current DPI (dpi_before_hold) is not the sniper DPI (index 0).
+        if (dpi_before_hold != 0) { // Ploopy DPI option 0 is the lowest (400 DPI)
+            keyboard_config.dpi_config = 0; // Set to sniper DPI (index 0)
+            eeconfig_update_kb(keyboard_config.raw);
+            pointing_device_set_cpi(dpi_array[keyboard_config.dpi_config]);
+            sniper_mode_was_active = true; // Mark that sniper mode (hold action) has occurred
+        }
     }
 }

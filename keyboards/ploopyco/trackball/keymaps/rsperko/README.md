@@ -2,10 +2,11 @@
 
 This keymap implements several advanced features for the Ploopy trackball:
 
-## 1. DPI TOGGLE (Button 2)
+## 1. DPI TOGGLE (Top-Middle Button)
 
--   Toggles between 400 and 1200 DPI
--   1200 DPI is the default setting
+-   Toggles between 400 and 1200 DPI on tap.
+-   1200 DPI is the default setting.
+-   **Hold**: Activates "Sniper Mode", temporarily switching to 400 DPI. Releasing the button reverts to the previous DPI.
 
 ## 2. TAP/HOLD FUNCTIONALITY FOR BUTTON 3
 
