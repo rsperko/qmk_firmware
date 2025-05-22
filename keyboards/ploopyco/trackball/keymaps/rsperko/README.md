@@ -2,26 +2,34 @@
 
 This keymap implements several advanced features for the Ploopy trackball:
 
-## 1. DPI TOGGLE (Top-Middle Button)
+## 1. DPI_TOGGLE (Top-Middle Button / Scroll Wheel Button)
 
--   Toggles between 400 and 1200 DPI on tap.
--   1200 DPI is the default setting.
--   **Hold**: Activates "Sniper Mode", temporarily switching to 400 DPI. Releasing the button reverts to the previous DPI.
+-   **Scroll Wheel:** Normal mouse scroll.
+-   **Button Tap:** Toggles Drag Scroll mode on/off.
+-   **Button Hold:** No action.
 
-## 2. TAP/HOLD FUNCTIONALITY FOR BUTTON 3
+## 2. BTN3_SCROLL (Top-Right Thumb Button)
 
--   Tapping sends Ctrl+Up
--   Holding activates drag scrolling mode
--   Pressing any button while drag scrolling is active will deactivate it
+-   **Tap:** Sends Ctrl+Down.
+-   **Hold:** Sends Ctrl+Up.
+-   _If Drag Scroll is active, tapping this button will deactivate Drag Scroll mode (and not send Ctrl+Down)._
 
-## 3. TAP/HOLD FUNCTIONALITY FOR BOTTOM-RIGHT BUTTON
+## 3. CTRL_DOWN_MOD (Bottom-Right Ring/Pinky Button)
 
--   Tapping sends Ctrl+Down
--   Holding activates a navigation layer where:
-    -   Left button (normally left-click) becomes back button (KC_BTN4)
-    -   Button 3 becomes forward button (KC_BTN5)
-    -   Top-Middle button cycles through windows of the current application (Cmd+`)
-    -   Bottom-Left button activates macOS Spotlight Search (Cmd+Space)
+-   **Tap:** Toggles Sniper DPI mode. Switches between 1000 DPI (normal) and 400 DPI (sniper).
+-   **Hold:** Activates a navigation layer where:
+    -   Top-Left button (physical KC_BTN1 position) becomes Back button (KC_BTN4).
+    -   Top-Middle button (physical DPI_TOGGLE position) cycles through windows of the current application (Cmd+`).
+    -   Top-Right button (physical BTN3_SCROLL position) becomes Forward button (KC_BTN5).
+    -   Bottom-Left button (physical KC_BTN2 position) activates macOS Spotlight Search (Cmd+Space).
+
+## 4. KC_BTN1 (Top-Left Thumb Button)
+
+-   Left Click.
+
+## 5. KC_BTN2 (Bottom-Left Ring/Pinky Button)
+
+-   Right Click.
 
 ## Implementation Details
 
@@ -29,5 +37,4 @@ Implementation uses QMK's layer system, custom keycodes, and timer-based
 behaviors to differentiate between taps and holds, creating an
 ergonomic multi-functional trackball setup.
 
-The TAPPING_TERM is set to 200ms by default, meaning you need to hold a button
-for more than 200ms to activate the hold function.
+The TAPPING_TERM (for differentiating tap vs. hold for BTN3_SCROLL and CTRL_DOWN_MOD) is set in `config.h` (currently 250ms).

@@ -17,9 +17,16 @@
 
 #pragma once
 
-// Custom DPI options (400 and 1200)
-#define PLOOPY_DPI_OPTIONS { 400, 1200 }
-#define PLOOPY_DPI_DEFAULT 1  // Default to 1200 DPI
+// Custom DPI options (400 and 1000)
+#define PLOOPY_DPI_OPTIONS { 400, 1000 }
+#define PLOOPY_DPI_DEFAULT 1  // Default to 1000 DPI
 
 // Tapping term for tap-hold functionality (in milliseconds)
-#define TAPPING_TERM 250  // Adjust this value to change how long you need to hold for drag scroll
+#define TAPPING_TERM 250  // Adjust this value to change how long you need to hold for tap-hold key functions
+
+// Drag Scroll Configuration (Ploopy Specific)
+// To make drag scroll slower, increase these divisor values (e.g., 12.0, 16.0). Default is 8.0.
+#define PLOOPY_DRAGSCROLL_DIVISOR_H 8.0
+#define PLOOPY_DRAGSCROLL_DIVISOR_V 8.0
+// Uncomment to invert drag scroll direction (like macOS natural scroll for vertical)
+// #define PLOOPY_DRAGSCROLL_INVERT
