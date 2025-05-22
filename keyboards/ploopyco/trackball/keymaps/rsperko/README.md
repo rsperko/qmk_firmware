@@ -17,10 +17,10 @@ This keymap implements several advanced features for the Ploopy trackball:
 ## 3. CTRL_DOWN_MOD (Bottom-Right Ring/Pinky Button)
 
 -   **Tap:** Toggles Sniper DPI mode. Switches between 1000 DPI (normal) and 400 DPI (sniper).
--   **Hold:** Activates a navigation layer where:
-    -   Top-Left button (physical KC_BTN1 position) becomes Back button (KC_BTN4).
+-   **Hold:** Activates a "Utility Layer" where:
+    -   Top-Left button (physical KC_BTN1 position) performs Copy (Cmd+C).
     -   Top-Middle button (physical DPI_TOGGLE position) cycles through windows of the current application (Cmd+`).
-    -   Top-Right button (physical BTN3_SCROLL position) becomes Forward button (KC_BTN5).
+    -   Top-Right button (physical BTN3_SCROLL position) performs Paste (Cmd+V).
     -   Bottom-Left button (physical KC_BTN2 position) activates macOS Spotlight Search (Cmd+Space).
 
 ## 4. KC_BTN1 (Top-Left Thumb Button)

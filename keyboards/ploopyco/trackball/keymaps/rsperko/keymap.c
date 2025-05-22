@@ -31,7 +31,7 @@ enum custom_keycodes {
 // Define layers
 enum layers {
     _BASE = 0,   // Base layer
-    _NAV_LAYER   // Navigation layer (e.g., for back/forward, app shortcuts)
+    _UTILITY_LAYER   // Utility layer (e.g., for copy/paste, app shortcuts)
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -40,9 +40,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
           KC_BTN2, CTRL_DOWN_MOD
     ),
 
-    [_NAV_LAYER] = LAYOUT( /* Navigation Layer - Hold Bottom-Right Button */
-        KC_BTN4, LGUI(KC_GRV), KC_BTN5,    // Top-Left: Back, Top-Middle: Cycle App Windows, Top-Right: Forward
-          LGUI(KC_SPC), KC_TRNS             // Bottom-Left: Spotlight, Bottom-Right: Transparent (Layer Activator)
+    [_UTILITY_LAYER] = LAYOUT( /* Utility Layer - Hold Bottom-Right Button */
+        LGUI(KC_C),   LGUI(KC_GRV), LGUI(KC_V),
+          LGUI(KC_SPC), KC_TRNS
     ),
 };
 
@@ -104,9 +104,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
             } else { // Key released
                 ctrl_down_held = false;
 
-                if (IS_LAYER_ON(_NAV_LAYER)) {
-                    // If Nav Layer was active due to hold, turn it off.
-                    layer_off(_NAV_LAYER);
+                if (IS_LAYER_ON(_UTILITY_LAYER)) {
+                    // If Utility Layer was active due to hold, turn it off.
+                    layer_off(_UTILITY_LAYER);
                 } else if (timer_elapsed(ctrl_down_timer) < TAPPING_TERM) {
                     // Tap action: Toggle Sniper DPI
                     if (sniper_dpi_active) {
@@ -121,7 +121,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                     eeconfig_update_kb(keyboard_config.raw);
                     pointing_device_set_cpi(dpi_array[keyboard_config.dpi_config]);
                 }
-                // Hold action (activating Nav Layer) is handled in matrix_scan_user
+                // Hold action (activating Utility Layer) is handled in matrix_scan_user
                 ctrl_down_timer = 0;
             }
             return false;
@@ -141,9 +141,9 @@ void matrix_scan_user(void) {
     }
 
     // Hold action for CTRL_DOWN_MOD (Bottom-Right Ring/Pinky)
-    if (ctrl_down_held && !IS_LAYER_ON(_NAV_LAYER) && timer_elapsed(ctrl_down_timer) > TAPPING_TERM) {
-        // Activate the navigation layer
-        layer_on(_NAV_LAYER);
+    if (ctrl_down_held && !IS_LAYER_ON(_UTILITY_LAYER) && timer_elapsed(ctrl_down_timer) > TAPPING_TERM) {
+        // Activate the utility layer
+        layer_on(_UTILITY_LAYER);
     }
 }
 
@@ -168,8 +168,8 @@ void keyboard_post_init_user(void) {
 }
 
 report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
-    if (IS_LAYER_ON(_NAV_LAYER)) {
-        // If the NAV_LAYER is active, suppress scroll wheel events
+    if (IS_LAYER_ON(_UTILITY_LAYER)) {
+        // If the UTILITY_LAYER is active, suppress scroll wheel events
         mouse_report.v = 0; // Zero out vertical scroll
         mouse_report.h = 0; // Zero out horizontal scroll
     }
@@ -185,7 +185,7 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
 
         // By returning true here, we allow the default QMK encoder action to proceed.
         // Since is_drag_scroll is now false, this will be a normal scroll event.
-        // If the _NAV_LAYER is also active, pointing_device_task_user will then suppress this scroll.
+        // If the _UTILITY_LAYER is also active, pointing_device_task_user will then suppress this scroll.
         return true;
     }
 
