@@ -22,6 +22,9 @@
 extern bool is_drag_scroll;
 extern void        toggle_drag_scroll(void); // Ensure we can call Ploopy's function
 
+// For Utility Layer scroll wheel Back/Forward
+static int8_t utility_scroll_accumulator = 0;
+
 // Define custom keycodes
 enum custom_keycodes {
     BTN3_SCROLL = SAFE_RANGE,
@@ -42,7 +45,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [_UTILITY_LAYER] = LAYOUT( /* Utility Layer - Hold Bottom-Right Button */
         LGUI(KC_C),   LGUI(KC_GRV), LGUI(KC_V),
-          LGUI(KC_SPC), KC_TRNS
+          LGUI(KC_X), KC_TRNS
     ),
 };
 
@@ -61,6 +64,21 @@ static bool sniper_dpi_active; // Initialized in keyboard_post_init_user
 
 // keyboard_config.dpi_config: 0 for 400 DPI, 1 for 1000 DPI based on PLOOPY_DPI_OPTIONS
 // PLOOPY_DPI_DEFAULT is 1 (1000 DPI)
+
+// Function to toggle Sniper DPI mode
+void toggle_sniper_mode(void) {
+    if (sniper_dpi_active) {
+        // Was sniper (400 DPI), switch to normal (1000 DPI)
+        keyboard_config.dpi_config = 1; // Index 1 for 1000 DPI
+        sniper_dpi_active          = false;
+    } else {
+        // Was normal (1000 DPI), switch to sniper (400 DPI)
+        keyboard_config.dpi_config = 0; // Index 0 for 400 DPI
+        sniper_dpi_active          = true;
+    }
+    eeconfig_update_kb(keyboard_config.raw);
+    pointing_device_set_cpi(dpi_array[keyboard_config.dpi_config]);
+}
 
 bool process_record_user(uint16_t keycode, keyrecord_t* record) {
     // If drag scroll is active and any key (OTHER THAN DRAG_SCROLL key itself, or BTN3_SCROLL)
@@ -109,17 +127,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t* record) {
                     layer_off(_UTILITY_LAYER);
                 } else if (timer_elapsed(ctrl_down_timer) < TAPPING_TERM) {
                     // Tap action: Toggle Sniper DPI
-                    if (sniper_dpi_active) {
-                        // Was sniper (400 DPI), switch to normal (1000 DPI)
-                        keyboard_config.dpi_config = 1; // Index 1 for 1000 DPI
-                        sniper_dpi_active          = false;
-                    } else {
-                        // Was normal (1000 DPI), switch to sniper (400 DPI)
-                        keyboard_config.dpi_config = 0; // Index 0 for 400 DPI
-                        sniper_dpi_active          = true;
-                    }
-                    eeconfig_update_kb(keyboard_config.raw);
-                    pointing_device_set_cpi(dpi_array[keyboard_config.dpi_config]);
+                    toggle_sniper_mode();
                 }
                 // Hold action (activating Utility Layer) is handled in matrix_scan_user
                 ctrl_down_timer = 0;
@@ -178,17 +186,32 @@ report_mouse_t pointing_device_task_user(report_mouse_t mouse_report) {
 
 // Called by QMK when a physical encoder (scroll wheel) is turned.
 bool encoder_update_user(uint8_t index, bool clockwise) {
-    if (is_drag_scroll) {
-        // Physical scroll wheel was used while drag scroll mode was active.
-        // Deactivate drag scroll mode.
+    if (IS_LAYER_ON(_UTILITY_LAYER)) {
+        if (clockwise) { // Typically scroll down / forward
+            utility_scroll_accumulator++;
+            if (utility_scroll_accumulator >= UTILITY_SCROLL_THRESHOLD) {
+                tap_code(KC_BTN5); // Forward
+                utility_scroll_accumulator = 0;
+            }
+        } else { // Counter-clockwise, typically scroll up / backward
+            utility_scroll_accumulator--;
+            if (utility_scroll_accumulator <= -UTILITY_SCROLL_THRESHOLD) {
+                tap_code(KC_BTN4); // Back
+                utility_scroll_accumulator = 0;
+            }
+        }
+        // On the Utility Layer, we've consumed the scroll event for our custom Back/Forward.
+        // Prevent the default scroll action.
+        return false;
+    } else if (is_drag_scroll) {
+        // If not on Utility Layer, but drag scroll is active,
+        // physical scroll wheel usage deactivates drag scroll.
         toggle_drag_scroll(); // This will set is_drag_scroll to false
 
-        // By returning true here, we allow the default QMK encoder action to proceed.
-        // Since is_drag_scroll is now false, this will be a normal scroll event.
-        // If the _UTILITY_LAYER is also active, pointing_device_task_user will then suppress this scroll.
+        // Allow this specific scroll event that broke drag scroll to pass through as a normal scroll.
         return true;
     }
 
-    // If drag scroll is not active, let QMK handle the encoder event normally for standard scrolling.
+    // If not on Utility Layer and drag scroll is not active, allow normal scroll behavior.
     return true;
 }

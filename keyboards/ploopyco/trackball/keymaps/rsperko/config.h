@@ -26,7 +26,11 @@
 
 // Drag Scroll Configuration (Ploopy Specific)
 // To make drag scroll slower, increase these divisor values (e.g., 12.0, 16.0). Default is 8.0.
-#define PLOOPY_DRAGSCROLL_DIVISOR_H 8.0
-#define PLOOPY_DRAGSCROLL_DIVISOR_V 8.0
+#define PLOOPY_DRAGSCROLL_DIVISOR_H 16.0
+#define PLOOPY_DRAGSCROLL_DIVISOR_V 16.0
 // Uncomment to invert drag scroll direction (like macOS natural scroll for vertical)
 // #define PLOOPY_DRAGSCROLL_INVERT
+
+// Threshold for Utility Layer scroll wheel Back/Forward
+// Number of scroll ticks in one direction to trigger a Back or Forward action.
+#define UTILITY_SCROLL_THRESHOLD 3

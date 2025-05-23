@@ -21,7 +21,7 @@ This keymap implements several advanced features for the Ploopy trackball:
     -   Top-Left button (physical KC_BTN1 position) performs Copy (Cmd+C).
     -   Top-Middle button (physical DPI_TOGGLE position) cycles through windows of the current application (Cmd+`).
     -   Top-Right button (physical BTN3_SCROLL position) performs Paste (Cmd+V).
-    -   Bottom-Left button (physical KC_BTN2 position) activates macOS Spotlight Search (Cmd+Space).
+    -   Bottom-Left button (physical KC_BTN2 position) performs Cut (Cmd+X).
 
 ## 4. KC_BTN1 (Top-Left Thumb Button)
 
